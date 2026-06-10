@@ -212,7 +212,13 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
         await ref.read(bookingsProvider(widget.hotelId).notifier).updateBooking(bookingData);
       }
 
-      if (mounted) context.pop();
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/hotels/${widget.hotelId}/bookings');
+        }
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -88,7 +88,13 @@ class _HotelFormScreenState extends ConsumerState<HotelFormScreen> {
       } else {
         await ref.read(hotelsProvider.notifier).updateHotel(hotelToSave);
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/hotels');
+        }
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);

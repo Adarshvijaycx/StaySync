@@ -87,7 +87,13 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
       } else {
         await ref.read(roomsProvider(widget.hotelId).notifier).updateRoom(roomToSave);
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/hotels/${widget.hotelId}/rooms');
+        }
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);

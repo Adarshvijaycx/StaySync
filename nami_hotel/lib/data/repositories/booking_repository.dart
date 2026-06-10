@@ -4,15 +4,27 @@ import '../../domain/entities/booking.dart';
 import '../../domain/entities/booking_status.dart';
 import '../datasources/local/booking_local_datasource.dart';
 import '../datasources/remote/booking_remote_datasource.dart';
+import '../../core/network/sync_queue.dart';
+import '../../core/network/sync_service.dart';
+import '../../core/constants/appwrite_constants.dart';
+import 'dart:convert';
+import 'package:uuid/uuid.dart';
 
 class BookingRepository {
   final BookingLocalDataSource _localDataSource;
   final BookingRemoteDataSource _remoteDataSource;
+  final SyncQueue _syncQueue;
+  final SyncNotifier _syncNotifier;
 
   BookingRepository({
-    required this._localDataSource,
-    required this._remoteDataSource,
-  });
+    required BookingLocalDataSource localDataSource,
+    required BookingRemoteDataSource remoteDataSource,
+    required SyncQueue syncQueue,
+    required SyncNotifier syncNotifier,
+  })  : _localDataSource = localDataSource,
+        _remoteDataSource = remoteDataSource,
+        _syncQueue = syncQueue,
+        _syncNotifier = syncNotifier;
 
   Future<List<Booking>> getBookingsForHotel(String hotelId, {bool forceRefresh = false}) async {
     try {
@@ -70,9 +82,23 @@ class BookingRepository {
       throw Exception('Room is already booked for the selected dates.');
     }
 
-    final remoteBooking = await _remoteDataSource.createBooking(booking);
-    await _localDataSource.saveBooking(remoteBooking);
-    return remoteBooking;
+    final newId = booking.id.isEmpty ? const Uuid().v4() : booking.id;
+    final localBooking = booking.copyWith(id: newId);
+
+    // Save locally
+    await _localDataSource.saveBooking(localBooking);
+
+    // Queue for sync
+    await _syncQueue.enqueue(
+      collectionId: AppwriteConstants.bookingsCollection,
+      operationType: 'create',
+      payload: json.encode(localBooking.toMap()),
+    );
+
+    // Trigger sync
+    _syncNotifier.syncNow();
+
+    return localBooking;
   }
 
   Future<Booking> updateBooking(Booking booking) async {
@@ -82,9 +108,21 @@ class BookingRepository {
     }
 
     final updated = booking.copyWith(updatedAt: DateTime.now());
-    final remoteBooking = await _remoteDataSource.updateBooking(updated);
-    await _localDataSource.saveBooking(remoteBooking);
-    return remoteBooking;
+
+    // Save locally
+    await _localDataSource.saveBooking(updated);
+
+    // Queue for sync
+    await _syncQueue.enqueue(
+      collectionId: AppwriteConstants.bookingsCollection,
+      operationType: 'update',
+      payload: json.encode(updated.toMap()),
+    );
+
+    // Trigger sync
+    _syncNotifier.syncNow();
+
+    return updated;
   }
 }
 
@@ -92,5 +130,7 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(
     localDataSource: ref.watch(bookingLocalDataSourceProvider),
     remoteDataSource: ref.watch(bookingRemoteDataSourceProvider),
+    syncQueue: ref.watch(syncQueueProvider),
+    syncNotifier: ref.watch(syncServiceProvider.notifier),
   );
 });

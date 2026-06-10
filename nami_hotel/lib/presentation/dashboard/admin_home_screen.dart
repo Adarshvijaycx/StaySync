@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../domain/entities/app_user.dart';
+import '../../shared/widgets/sync_status_indicator.dart';
 
 /// Admin home screen — full access to all management features.
 ///
@@ -21,6 +22,7 @@ class AdminHomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Nami Hotel'),
         actions: [
+          const SyncStatusIndicator(),
           _buildUserChip(context, user),
           const SizedBox(width: 8),
           IconButton(

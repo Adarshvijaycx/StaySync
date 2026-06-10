@@ -50,9 +50,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: password,
           );
 
+      if (!mounted) return;
+
       // Check for errors after login attempt
       final state = ref.read(authNotifierProvider);
-      if (state is AuthUnauthenticated && state.errorMessage != null && mounted) {
+      if (state is AuthUnauthenticated && state.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(state.errorMessage!),

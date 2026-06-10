@@ -69,6 +69,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = const AuthLoading();
 
+    // --- TEMPORARY MOCK LOGIN BYPASS ---
+    // Since Appwrite is not fully configured yet, use these credentials to test:
+    if (email == 'admin@nami.com') {
+      state = AuthAuthenticated(AppUser(
+        userId: 'admin_123',
+        email: email,
+        name: 'Super Admin',
+        role: UserRole.admin,
+        isActive: true,
+      ));
+      return;
+    } else if (email == 'manager@nami.com') {
+      state = AuthAuthenticated(AppUser(
+        userId: 'manager_123',
+        email: email,
+        name: 'Hotel Manager',
+        role: UserRole.manager,
+        hotelId: 'hotel_xyz',
+        isActive: true,
+      ));
+      return;
+    } else if (email == 'staff@nami.com') {
+      state = AuthAuthenticated(AppUser(
+        userId: 'staff_123',
+        email: email,
+        name: 'Front Desk Staff',
+        role: UserRole.staff,
+        hotelId: 'hotel_xyz',
+        isActive: true,
+      ));
+      return;
+    }
+    // --- END TEMPORARY BYPASS ---
+
     try {
       final user = await _authRepository.login(
         email: email,
