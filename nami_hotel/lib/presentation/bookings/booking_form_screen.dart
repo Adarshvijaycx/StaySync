@@ -49,11 +49,11 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       // Customer Info
       'guest_name': FormControl<String>(validators: [Validators.required]),
       'dob': FormControl<DateTime>(validators: [Validators.required]),
-      'phone': FormControl<String>(validators: [Validators.required]),
+      'phone': FormControl<String>(validators: [Validators.required, Validators.pattern(r'^\d{10}$')]),
       'email': FormControl<String>(validators: [Validators.email]),
       'parent_name': FormControl<String>(),
       'address': FormControl<String>(validators: [Validators.required]),
-      'pincode': FormControl<String>(validators: [Validators.required]),
+      'pincode': FormControl<String>(validators: [Validators.required, Validators.pattern(r'^\d{6}$')]),
       'id_proof_type': FormControl<IdProofType>(value: IdProofType.aadhaar, validators: [Validators.required]),
 
       // Booking Info
@@ -278,6 +278,10 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                       formControlName: 'phone',
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(labelText: 'Phone', prefixIcon: Icon(Icons.phone_rounded)),
+                      validationMessages: {
+                        'required': (_) => 'Phone is required',
+                        'pattern': (_) => 'Must be exactly 10 digits',
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -303,6 +307,10 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                 formControlName: 'pincode',
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Pincode', prefixIcon: Icon(Icons.pin_drop_rounded)),
+                validationMessages: {
+                  'required': (_) => 'Pincode is required',
+                  'pattern': (_) => 'Must be exactly 6 digits',
+                },
               ),
               const SizedBox(height: 24),
 

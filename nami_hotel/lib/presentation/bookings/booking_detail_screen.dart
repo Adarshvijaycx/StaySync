@@ -6,6 +6,8 @@ import '../../core/providers/booking_providers.dart';
 import '../../core/providers/customer_providers.dart';
 import '../../core/providers/item_providers.dart';
 import '../../domain/entities/booking_status.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/error_state_widget.dart';
 import '../items/add_item_sheet.dart';
 import 'checkout_sheet.dart';
 
@@ -155,11 +157,10 @@ class BookingDetailScreen extends ConsumerWidget {
                 child: tabItemsAsync.when(
                   data: (items) {
                     if (items.isEmpty) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('No items added to tab yet.'),
-                        ),
+                      return const EmptyStateWidget(
+                        icon: Icons.receipt_long_rounded,
+                        title: 'Tab is empty',
+                        subtitle: 'No items added to tab yet.',
                       );
                     }
 
@@ -212,7 +213,10 @@ class BookingDetailScreen extends ConsumerWidget {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error loading tab: $e'),
+                  error: (error, _) => ErrorStateWidget(
+                    errorMessage: error.toString(),
+                    onRetry: () => ref.read(bookingItemsProvider(bookingId).notifier).refresh(),
+                  ),
                 ),
               ),
             ),

@@ -6,6 +6,8 @@ import '../../core/providers/hotel_providers.dart';
 import '../../core/providers/room_providers.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/room.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/error_state_widget.dart';
 
 class RoomListScreen extends ConsumerWidget {
   final String hotelId;
@@ -32,31 +34,10 @@ class RoomListScreen extends ConsumerWidget {
       body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.meeting_room_rounded,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No rooms found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (isAdmin) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap the + button to add a room',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                ],
-              ),
+            return EmptyStateWidget(
+              icon: Icons.meeting_room_rounded,
+              title: 'No rooms found',
+              subtitle: isAdmin ? 'Tap the + button to add a room' : 'There are no rooms available.',
             );
           }
 
@@ -74,11 +55,9 @@ class RoomListScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text(
-            'Error loading rooms: $error',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
+        error: (error, _) => ErrorStateWidget(
+          errorMessage: error.toString(),
+          onRetry: () => ref.read(roomsProvider(hotelId).notifier).refresh(),
         ),
       ),
       floatingActionButton: isAdmin

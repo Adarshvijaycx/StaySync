@@ -7,6 +7,8 @@ import '../../core/providers/customer_providers.dart';
 import '../../core/providers/hotel_providers.dart';
 import '../../domain/entities/booking.dart';
 import '../../domain/entities/booking_status.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/error_state_widget.dart';
 
 class BookingListScreen extends ConsumerStatefulWidget {
   final String hotelId;
@@ -64,22 +66,10 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
               : bookings.where((b) => b.status == _statusFilter).toList();
 
           if (filteredBookings.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.book_online_rounded,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No bookings found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
-              ),
+            return const EmptyStateWidget(
+              icon: Icons.book_online_rounded,
+              title: 'No bookings found',
+              subtitle: 'There are no bookings matching your criteria.',
             );
           }
 
@@ -99,11 +89,11 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text(
-            'Error loading bookings: $error',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
+        error: (error, _) => ErrorStateWidget(
+          errorMessage: error.toString(),
+          onRetry: () {
+            ref.read(bookingsProvider(widget.hotelId).notifier).refresh();
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(

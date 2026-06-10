@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import '../../core/providers/item_providers.dart';
 import '../../domain/entities/item_catalogue.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/error_state_widget.dart';
 
 class ItemCatalogueScreen extends ConsumerWidget {
   final String hotelId;
@@ -26,7 +28,11 @@ class ItemCatalogueScreen extends ConsumerWidget {
       body: catalogueAsync.when(
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('No items in catalogue.'));
+            return const EmptyStateWidget(
+              icon: Icons.inventory_2_rounded,
+              title: 'Catalogue is empty',
+              subtitle: 'Add items to the catalogue to start selling.',
+            );
           }
 
           // Group by category
@@ -79,7 +85,10 @@ class ItemCatalogueScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (error, _) => ErrorStateWidget(
+          errorMessage: error.toString(),
+          onRetry: () => ref.read(itemCatalogueProvider(hotelId).notifier).refresh(),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showItemForm(context, ref, null),

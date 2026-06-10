@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/hotel_providers.dart';
+import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/error_state_widget.dart';
 
 class HotelListScreen extends ConsumerWidget {
   const HotelListScreen({super.key});
@@ -23,29 +25,10 @@ class HotelListScreen extends ConsumerWidget {
       body: hotelsAsync.when(
         data: (hotels) {
           if (hotels.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.apartment_rounded,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No hotels found',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the + button to add a new property',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
+            return const EmptyStateWidget(
+              icon: Icons.apartment_rounded,
+              title: 'No hotels found',
+              subtitle: 'Tap the + button to add a new property',
             );
           }
 
@@ -113,11 +96,9 @@ class HotelListScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text(
-            'Error loading hotels: $error',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
+        error: (error, _) => ErrorStateWidget(
+          errorMessage: error.toString(),
+          onRetry: () => ref.read(hotelsProvider.notifier).refresh(),
         ),
       ),
       floatingActionButton: FloatingActionButton(

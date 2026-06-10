@@ -25,7 +25,7 @@ class _HotelFormScreenState extends ConsumerState<HotelFormScreen> {
     _form = FormGroup({
       'name': FormControl<String>(validators: [Validators.required]),
       'address': FormControl<String>(validators: [Validators.required]),
-      'contact_number': FormControl<String>(validators: [Validators.required]),
+      'contact_number': FormControl<String>(validators: [Validators.required, Validators.pattern(r'^\d{10}$')]),
       'email': FormControl<String>(validators: [Validators.required, Validators.email]),
       'is_active': FormControl<bool>(value: true),
     });
@@ -150,7 +150,10 @@ class _HotelFormScreenState extends ConsumerState<HotelFormScreen> {
                   labelText: 'Contact Number',
                   prefixIcon: Icon(Icons.phone_rounded),
                 ),
-                validationMessages: {'required': (_) => 'Contact number is required'},
+                validationMessages: {
+                  'required': (_) => 'Contact number is required',
+                  'pattern': (_) => 'Must be exactly 10 digits',
+                },
               ),
               const SizedBox(height: 16),
               ReactiveTextField<String>(
