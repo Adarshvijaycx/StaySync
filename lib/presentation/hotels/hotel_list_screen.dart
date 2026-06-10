@@ -88,14 +88,35 @@ class HotelListScreen extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.meeting_room_rounded),
-                          tooltip: 'Manage Rooms',
-                          onPressed: () => context.push('/hotels/${hotel.id}/rooms'),
+                          icon: const Icon(Icons.book_online_rounded),
+                          tooltip: 'Manage Bookings',
+                          onPressed: () => context.push('/hotels/${hotel.id}/bookings'),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_rounded),
-                          tooltip: 'Edit Hotel',
-                          onPressed: () => context.push('/hotels/${hotel.id}/edit'),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert_rounded),
+                          tooltip: 'More options',
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'rooms':
+                                context.push('/hotels/${hotel.id}/rooms');
+                                break;
+                              case 'catalogue':
+                                context.push('/hotels/${hotel.id}/items');
+                                break;
+                              case 'dashboard':
+                                context.push('/hotels/${hotel.id}/dashboard');
+                                break;
+                              case 'edit':
+                                context.push('/hotels/${hotel.id}/edit');
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(value: 'rooms', child: Text('Manage Rooms')),
+                            PopupMenuItem(value: 'catalogue', child: Text('Item Catalogue')),
+                            PopupMenuItem(value: 'dashboard', child: Text('Hotel Dashboard')),
+                            PopupMenuItem(value: 'edit', child: Text('Edit Hotel')),
+                          ],
                         ),
                       ],
                     ),
