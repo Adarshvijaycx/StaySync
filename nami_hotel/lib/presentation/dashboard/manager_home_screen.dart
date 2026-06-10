@@ -176,6 +176,14 @@ class ManagerHomeScreen extends ConsumerWidget {
                     const SnackBar(content: Text('No hotel assigned to your account.')),
                   );
                 }
+              } else if (action.label == 'Dashboard') {
+                if (hotelId != null && hotelId.isNotEmpty) {
+                  context.go('/hotels/$hotelId/dashboard');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No hotel assigned to your account.')),
+                  );
+                }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

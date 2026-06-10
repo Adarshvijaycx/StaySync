@@ -185,6 +185,10 @@ class AdminHomeScreen extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please select a Hotel from the Hotels list to manage its catalogue.')),
                 );
+              } else if (action.label == 'Dashboard') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select a Hotel from the Hotels list to view its dashboard.')),
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
