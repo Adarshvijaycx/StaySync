@@ -125,14 +125,20 @@ class AdminHomeScreen extends ConsumerWidget {
       _ActionItem(
         icon: Icons.meeting_room_rounded,
         label: 'Rooms',
-        subtitle: 'Room inventory',
-        color: colorScheme.tertiary,
+        subtitle: 'View availability',
+        color: colorScheme.primary,
       ),
       _ActionItem(
         icon: Icons.book_online_rounded,
         label: 'Bookings',
-        subtitle: 'Guest bookings',
+        subtitle: 'Manage guests',
         color: colorScheme.secondary,
+      ),
+      _ActionItem(
+        icon: Icons.fastfood_rounded,
+        label: 'Catalogue',
+        subtitle: 'Manage items',
+        color: colorScheme.tertiary,
       ),
       _ActionItem(
         icon: Icons.people_rounded,
@@ -174,6 +180,10 @@ class AdminHomeScreen extends ConsumerWidget {
               } else if (action.label == 'Bookings') {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please select a Hotel from the Hotels list to view its bookings.')),
+                );
+              } else if (action.label == 'Catalogue') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select a Hotel from the Hotels list to manage its catalogue.')),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(

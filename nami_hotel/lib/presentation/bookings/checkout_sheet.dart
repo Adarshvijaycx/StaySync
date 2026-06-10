@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/booking_providers.dart';
+import '../../core/providers/item_providers.dart';
 import '../../core/providers/room_providers.dart';
 import '../../domain/entities/booking.dart';
 import '../../domain/entities/booking_status.dart';
@@ -19,7 +20,7 @@ class CheckoutSheet extends ConsumerStatefulWidget {
 class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   bool _isLoading = false;
 
-  Future<void> _processCheckout() async {
+  Future<void> _processCheckout(double finalTotal) async {
     setState(() => _isLoading = true);
     try {
       // 1. Update Booking
@@ -27,6 +28,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
       final updatedBooking = widget.booking.copyWith(
         status: BookingStatus.checkedOut,
         actualCheckOut: checkoutTime,
+        totalAmount: finalTotal,
       );
       await ref.read(bookingsProvider(widget.booking.hotelId).notifier).updateBooking(updatedBooking);
 
@@ -58,6 +60,8 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final roomsState = ref.watch(roomsProvider(widget.booking.hotelId));
+    final tabItemsState = ref.watch(bookingItemsProvider(widget.booking.id));
 
     return Padding(
       padding: EdgeInsets.only(
@@ -76,29 +80,94 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text('Confirm checkout for this booking? The room will be marked for cleaning.'),
-            const SizedBox(height: 32),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else ...[
-              FilledButton(
-                onPressed: _processCheckout,
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error,
-                  foregroundColor: theme.colorScheme.onError,
-                  minimumSize: const Size.fromHeight(50),
-                ),
-                child: const Text('Confirm Checkout'),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => context.pop(),
-                child: const Text('Cancel'),
-              ),
-            ],
+            
+            // Calculate Bill
+            roomsState.when(
+              data: (rooms) {
+                final room = rooms.firstWhere((r) => r.id == widget.booking.roomId);
+                // Calculate nights (minimum 1)
+                final checkoutDate = DateTime.now();
+                int nights = checkoutDate.difference(widget.booking.checkIn).inDays;
+                if (nights <= 0) nights = 1;
+                final roomCharges = nights * room.rate;
+
+                return tabItemsState.when(
+                  data: (items) {
+                    double tabTotal = 0;
+                    for (var item in items) {
+                      tabTotal += item.totalPrice;
+                    }
+                    final grandTotal = roomCharges + tabTotal;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text('Bill Summary', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _BillRow('Room Charges (${nights}x \$${room.rate.toStringAsFixed(2)})', roomCharges),
+                        _BillRow('Guest Tab Charges', tabTotal),
+                        const Divider(height: 24),
+                        _BillRow('Grand Total', grandTotal, isTotal: true),
+                        const SizedBox(height: 32),
+                        if (_isLoading)
+                          const Center(child: CircularProgressIndicator())
+                        else ...[
+                          FilledButton(
+                            onPressed: () => _processCheckout(grandTotal),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: theme.colorScheme.error,
+                              foregroundColor: theme.colorScheme.onError,
+                              minimumSize: const Size.fromHeight(50),
+                            ),
+                            child: const Text('Confirm Checkout & Print Bill'),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => context.pop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Text('Error loading tab items: $e'),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Text('Error loading room data: $e'),
+            ),
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BillRow extends StatelessWidget {
+  final String label;
+  final double amount;
+  final bool isTotal;
+
+  const _BillRow(this.label, this.amount, {this.isTotal = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+      color: isTotal ? Theme.of(context).colorScheme.primary : null,
+      fontSize: isTotal ? 18 : null,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: style),
+          Text('\$${amount.toStringAsFixed(2)}', style: style),
+        ],
       ),
     );
   }

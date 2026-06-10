@@ -14,6 +14,7 @@ import '../../presentation/rooms/room_form_screen.dart';
 import '../../presentation/bookings/booking_list_screen.dart';
 import '../../presentation/bookings/booking_form_screen.dart';
 import '../../presentation/bookings/booking_detail_screen.dart';
+import '../../presentation/items/item_catalogue_screen.dart';
 
 /// Route path constants.
 class AppRoutes {
@@ -157,6 +158,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final hotelId = state.pathParameters['hotelId']!;
           return BookingListScreen(hotelId: hotelId);
+        },
+      ),
+
+      // Item Catalogue
+      GoRoute(
+        path: '/hotels/:hotelId/items',
+        builder: (context, state) {
+          final hotelId = state.pathParameters['hotelId']!;
+          return ItemCatalogueScreen(hotelId: hotelId);
         },
       ),
 

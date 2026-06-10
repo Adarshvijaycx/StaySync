@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers/booking_providers.dart';
 import '../../core/providers/customer_providers.dart';
+import '../../core/providers/item_providers.dart';
 import '../../domain/entities/booking_status.dart';
+import '../items/add_item_sheet.dart';
 import 'checkout_sheet.dart';
 
 class BookingDetailScreen extends ConsumerWidget {
@@ -26,6 +28,8 @@ class BookingDetailScreen extends ConsumerWidget {
     }
 
     final customer = ref.watch(customerProvider(booking.customerId));
+    final tabItemsAsync = ref.watch(bookingItemsProvider(bookingId));
+    
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('MMM dd, yyyy - hh:mm a');
@@ -120,6 +124,95 @@ class BookingDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Guest Tab Card
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Guest Tab', style: theme.textTheme.titleLarge),
+                if (booking.status == BookingStatus.confirmed)
+                  TextButton.icon(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) => AddItemSheet(hotelId: hotelId, bookingId: bookingId),
+                      );
+                    },
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Add Item'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: tabItemsAsync.when(
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text('No items added to tab yet.'),
+                        ),
+                      );
+                    }
+
+                    double tabTotal = 0;
+                    for (var item in items) {
+                      tabTotal += item.totalPrice;
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ...items.map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.itemName, style: theme.textTheme.titleMedium),
+                                    Text('${item.quantity} x \$${item.unitPrice.toStringAsFixed(2)}', style: theme.textTheme.bodySmall),
+                                  ],
+                                ),
+                              ),
+                              Text('\$${item.totalPrice.toStringAsFixed(2)}', style: theme.textTheme.titleMedium),
+                              // Manager could delete, but let's keep it simple: anyone can delete if status is confirmed
+                              if (booking.status == BookingStatus.confirmed)
+                                IconButton(
+                                  icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error, size: 20),
+                                  onPressed: () {
+                                    ref.read(bookingItemsProvider(bookingId).notifier).deleteBookingItem(item.id);
+                                  },
+                                ),
+                            ],
+                          ),
+                        )),
+                        const Divider(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Tab Total', style: theme.textTheme.titleMedium),
+                            Text('\$${tabTotal.toStringAsFixed(2)}', style: theme.textTheme.titleMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            )),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Text('Error loading tab: $e'),
                 ),
               ),
             ),

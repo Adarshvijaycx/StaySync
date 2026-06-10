@@ -111,22 +111,22 @@ class ManagerHomeScreen extends ConsumerWidget {
   Widget _buildActionsGrid(BuildContext context, ColorScheme colorScheme, AppUser? user) {
     final actions = [
       _ActionItem(
-        icon: Icons.book_online_rounded,
-        label: 'Bookings',
-        subtitle: 'Create & manage',
-        color: colorScheme.primary,
-      ),
-      _ActionItem(
         icon: Icons.meeting_room_rounded,
         label: 'Rooms',
         subtitle: 'View availability',
-        color: colorScheme.tertiary,
+        color: colorScheme.primary,
       ),
       _ActionItem(
-        icon: Icons.receipt_long_rounded,
-        label: 'Guest Tabs',
-        subtitle: 'Add items & bills',
+        icon: Icons.book_online_rounded,
+        label: 'Bookings',
+        subtitle: 'Manage guests',
         color: colorScheme.secondary,
+      ),
+      _ActionItem(
+        icon: Icons.fastfood_rounded,
+        label: 'Catalogue',
+        subtitle: 'Manage items',
+        color: colorScheme.tertiary,
       ),
       _ActionItem(
         icon: Icons.dashboard_rounded,
@@ -163,6 +163,14 @@ class ManagerHomeScreen extends ConsumerWidget {
               } else if (action.label == 'Bookings') {
                 if (hotelId != null && hotelId.isNotEmpty) {
                   context.go('/hotels/$hotelId/bookings');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No hotel assigned to your account.')),
+                  );
+                }
+              } else if (action.label == 'Catalogue') {
+                if (hotelId != null && hotelId.isNotEmpty) {
+                  context.go('/hotels/$hotelId/items');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),

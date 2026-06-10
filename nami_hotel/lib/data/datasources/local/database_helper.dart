@@ -97,6 +97,38 @@ class DatabaseHelper {
         FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
       )
     ''');
+
+    // Create Item Catalogue table
+    await db.execute('''
+      CREATE TABLE item_catalogue (
+        id TEXT PRIMARY KEY,
+        hotel_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        default_price REAL NOT NULL,
+        is_active INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (hotel_id) REFERENCES hotels (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create Booking Items table
+    await db.execute('''
+      CREATE TABLE booking_items (
+        id TEXT PRIMARY KEY,
+        booking_id TEXT NOT NULL,
+        hotel_id TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        item_name TEXT NOT NULL,
+        unit_price REAL NOT NULL,
+        quantity INTEGER NOT NULL,
+        added_by_user_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        FOREIGN KEY (booking_id) REFERENCES bookings (id) ON DELETE CASCADE,
+        FOREIGN KEY (hotel_id) REFERENCES hotels (id) ON DELETE CASCADE
+      )
+    ''');
   }
 }
 
