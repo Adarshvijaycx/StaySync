@@ -352,7 +352,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               ReactiveDropdownField<String>(
                 formControlName: 'room_id',
                 decoration: const InputDecoration(labelText: 'Assign Room', prefixIcon: Icon(Icons.meeting_room_rounded)),
-                items: _availableRooms.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.roomNumber} - ${r.type.displayName} (\$${r.rate})'))).toList(),
+                items: _availableRooms.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.roomNumber} - ${r.type.displayName} (₹${r.rate})'))).toList(),
               ),
               const SizedBox(height: 16),
 
@@ -401,7 +401,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               ReactiveTextField<double>(
                 formControlName: 'total_amount',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Total Amount (\$)', prefixIcon: Icon(Icons.attach_money_rounded)),
+                decoration: const InputDecoration(labelText: 'Total Amount (₹)', prefixIcon: Icon(Icons.currency_rupee_rounded)),
               ),
 
               const SizedBox(height: 32),

@@ -156,7 +156,7 @@ class ManagerHomeScreen extends ConsumerWidget {
               final hotelId = user?.hotelId;
               if (action.label == 'Rooms') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/rooms');
+                  context.push('/hotels/$hotelId/rooms');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),
@@ -164,7 +164,7 @@ class ManagerHomeScreen extends ConsumerWidget {
                 }
               } else if (action.label == 'Bookings') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/bookings');
+                  context.push('/hotels/$hotelId/bookings');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),
@@ -172,7 +172,7 @@ class ManagerHomeScreen extends ConsumerWidget {
                 }
               } else if (action.label == 'Catalogue') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/items');
+                  context.push('/hotels/$hotelId/items');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),
@@ -180,7 +180,7 @@ class ManagerHomeScreen extends ConsumerWidget {
                 }
               } else if (action.label == 'Dashboard') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/dashboard');
+                  context.push('/hotels/$hotelId/dashboard');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),

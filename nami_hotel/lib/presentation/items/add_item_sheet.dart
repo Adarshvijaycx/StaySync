@@ -72,7 +72,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                         items: activeItems.map((item) {
                           return DropdownMenuItem(
                             value: item,
-                            child: Text('${item.name} (\$${item.defaultPrice.toStringAsFixed(2)})'),
+                            child: Text('${item.name} (₹${item.defaultPrice.toStringAsFixed(2)})'),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -99,7 +99,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             child: ReactiveTextField<double>(
                               formControlName: 'unitPrice',
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              decoration: const InputDecoration(labelText: 'Unit Price (\$)'),
+                              decoration: const InputDecoration(labelText: 'Unit Price (₹)'),
                             ),
                           ),
                         ],

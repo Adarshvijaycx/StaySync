@@ -44,7 +44,7 @@ class BookingDetailScreen extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.edit_rounded),
               tooltip: 'Edit Booking',
-              onPressed: () => context.go('/hotels/$hotelId/bookings/$bookingId/edit'),
+              onPressed: () => context.push('/hotels/$hotelId/bookings/$bookingId/edit'),
             ),
         ],
       ),
@@ -119,7 +119,7 @@ class BookingDetailScreen extends ConsumerWidget {
                     _DetailRow('Payment Mode', booking.paymentMode.displayName),
                     _DetailRow(
                       'Total Amount',
-                      '\$${booking.totalAmount.toStringAsFixed(2)}',
+                      '₹${booking.totalAmount.toStringAsFixed(2)}',
                       valueStyle: theme.textTheme.titleMedium?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -182,11 +182,11 @@ class BookingDetailScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.itemName, style: theme.textTheme.titleMedium),
-                                    Text('${item.quantity} x \$${item.unitPrice.toStringAsFixed(2)}', style: theme.textTheme.bodySmall),
+                                    Text('${item.quantity} x ₹${item.unitPrice.toStringAsFixed(2)}', style: theme.textTheme.bodySmall),
                                   ],
                                 ),
                               ),
-                              Text('\$${item.totalPrice.toStringAsFixed(2)}', style: theme.textTheme.titleMedium),
+                              Text('₹${item.totalPrice.toStringAsFixed(2)}', style: theme.textTheme.titleMedium),
                               // Manager could delete, but let's keep it simple: anyone can delete if status is confirmed
                               if (booking.status == BookingStatus.confirmed)
                                 IconButton(
@@ -203,7 +203,7 @@ class BookingDetailScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Tab Total', style: theme.textTheme.titleMedium),
-                            Text('\$${tabTotal.toStringAsFixed(2)}', style: theme.textTheme.titleMedium?.copyWith(
+                            Text('₹${tabTotal.toStringAsFixed(2)}', style: theme.textTheme.titleMedium?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             )),

@@ -111,7 +111,7 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                         KPICard(
                           title: 'Monthly Revenue',
-                          value: '\$${monthlyRevenue.toStringAsFixed(0)}',
+                          value: '₹${monthlyRevenue.toStringAsFixed(0)}',
                           subtitle: 'This month',
                           icon: Icons.attach_money_rounded,
                           color: Colors.green,

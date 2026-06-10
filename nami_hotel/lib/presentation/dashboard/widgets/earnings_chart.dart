@@ -71,7 +71,7 @@ class EarningsChart extends StatelessWidget {
               getTooltipColor: (_) => theme.colorScheme.inverseSurface,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
-                  '\$${rod.toY.toStringAsFixed(0)}',
+                  '₹${rod.toY.toStringAsFixed(0)}',
                   TextStyle(color: theme.colorScheme.onInverseSurface, fontWeight: FontWeight.bold),
                 );
               },
@@ -105,7 +105,7 @@ class EarningsChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   if (value == maxY || value == 0) return const SizedBox.shrink();
                   return Text(
-                    '\$${value.toInt()}',
+                    '₹${value.toInt()}',
                     style: theme.textTheme.labelSmall,
                     textAlign: TextAlign.end,
                   );

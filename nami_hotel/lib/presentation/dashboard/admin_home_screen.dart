@@ -52,10 +52,6 @@ class AdminHomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildActionsGrid(context, colorScheme),
 
-            const SizedBox(height: 24),
-
-            // Info card
-            _buildInfoCard(context, colorScheme),
           ],
         ),
       ),
@@ -178,7 +174,7 @@ class AdminHomeScreen extends ConsumerWidget {
           child: InkWell(
             onTap: () {
               if (action.label == 'Hotels') {
-                context.go('/hotels');
+                context.push('/hotels');
               } else if (action.label == 'Bookings') {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please select a Hotel from the Hotels list to view its bookings.')),
@@ -242,31 +238,6 @@ class AdminHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, ColorScheme colorScheme) {
-    return Card(
-      color: colorScheme.tertiaryContainer.withValues(alpha: 0.4),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              Icons.info_outline_rounded,
-              color: colorScheme.tertiary,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Phase 2 complete — Authentication & role-based routing active. Feature screens coming in Phase 3+.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onTertiaryContainer,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildUserChip(BuildContext context, AppUser? user) {
     final colorScheme = Theme.of(context).colorScheme;

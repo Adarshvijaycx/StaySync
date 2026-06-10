@@ -63,13 +63,23 @@ class HotelListScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        Text(hotel.address),
+                        Text(
+                          hotel.address,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
                             Icon(Icons.phone_rounded, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             const SizedBox(width: 4),
-                            Text(hotel.contactNumber),
+                            Expanded(
+                              child: Text(
+                                hotel.contactNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -80,12 +90,12 @@ class HotelListScreen extends ConsumerWidget {
                         IconButton(
                           icon: const Icon(Icons.meeting_room_rounded),
                           tooltip: 'Manage Rooms',
-                          onPressed: () => context.go('/hotels/${hotel.id}/rooms'),
+                          onPressed: () => context.push('/hotels/${hotel.id}/rooms'),
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit_rounded),
                           tooltip: 'Edit Hotel',
-                          onPressed: () => context.go('/hotels/${hotel.id}/edit'),
+                          onPressed: () => context.push('/hotels/${hotel.id}/edit'),
                         ),
                       ],
                     ),
@@ -102,7 +112,7 @@ class HotelListScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/hotels/new'),
+        onPressed: () => context.push('/hotels/new'),
         child: const Icon(Icons.add_rounded),
       ),
     );

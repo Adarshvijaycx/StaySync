@@ -152,8 +152,8 @@ class _RoomFormScreenState extends ConsumerState<RoomFormScreen> {
                 formControlName: 'rate',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
-                  labelText: 'Nightly Rate (\$)',
-                  prefixIcon: Icon(Icons.attach_money_rounded),
+                  labelText: 'Nightly Rate (₹)',
+                  prefixIcon: Icon(Icons.currency_rupee_rounded),
                 ),
                 validationMessages: {
                   'required': (_) => 'Rate is required',

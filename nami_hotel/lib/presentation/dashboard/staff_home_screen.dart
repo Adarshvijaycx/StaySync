@@ -150,7 +150,7 @@ class StaffHomeScreen extends ConsumerWidget {
               final hotelId = user?.hotelId;
               if (action.label == 'Rooms') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/rooms');
+                  context.push('/hotels/$hotelId/rooms');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),
@@ -158,7 +158,7 @@ class StaffHomeScreen extends ConsumerWidget {
                 }
               } else if (action.label == 'Bookings') {
                 if (hotelId != null && hotelId.isNotEmpty) {
-                  context.go('/hotels/$hotelId/bookings');
+                  context.push('/hotels/$hotelId/bookings');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('No hotel assigned to your account.')),

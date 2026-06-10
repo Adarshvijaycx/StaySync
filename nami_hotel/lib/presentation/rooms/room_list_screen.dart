@@ -62,7 +62,7 @@ class RoomListScreen extends ConsumerWidget {
       ),
       floatingActionButton: isAdmin
           ? FloatingActionButton(
-              onPressed: () => context.go('/hotels/$hotelId/rooms/new'),
+              onPressed: () => context.push('/hotels/$hotelId/rooms/new'),
               child: const Icon(Icons.add_rounded),
             )
           : null,
@@ -129,7 +129,7 @@ class _RoomCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${room.rate.toStringAsFixed(2)} / night',
+                        '₹${room.rate.toStringAsFixed(2)} / night',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w600,
@@ -154,7 +154,7 @@ class _RoomCard extends StatelessWidget {
               const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.edit_rounded),
-                onPressed: () => context.go('/hotels/$hotelId/rooms/${room.id}/edit'),
+                onPressed: () => context.push('/hotels/$hotelId/rooms/${room.id}/edit'),
               ),
             ],
           ],

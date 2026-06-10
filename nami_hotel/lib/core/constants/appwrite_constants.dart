@@ -2,9 +2,9 @@
 ///
 /// Replace placeholder values with your actual Appwrite project credentials.
 class AppwriteConstants {
-  static const String projectId   = 'YOUR_PROJECT_ID';   // ← replace
-  static const String endpoint    = 'https://cloud.appwrite.io/v1';
-  static const String databaseId  = 'YOUR_DATABASE_ID';  // ← replace
+  static const String projectId   = '6a294212001bb4d81b03';   // Extracted from screenshot
+  static const String endpoint    = 'https://sgp.cloud.appwrite.io/v1';
+  static const String databaseId  = 'nami_hotel_db';
 
   // Collection IDs (fill as you create them in Appwrite Console)
   static const String hotelsCollection       = 'hotels';

@@ -68,7 +68,7 @@ class ItemCatalogueScreen extends ConsumerWidget {
                             decoration: item.isActive ? null : TextDecoration.lineThrough,
                             color: item.isActive ? null : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                           )),
-                          subtitle: Text('\$${item.defaultPrice.toStringAsFixed(2)}'),
+                          subtitle: Text('₹${item.defaultPrice.toStringAsFixed(2)}'),
                           trailing: Switch(
                             value: item.isActive,
                             onChanged: (val) {
@@ -180,7 +180,7 @@ class _ItemFormState extends ConsumerState<_ItemForm> {
                 ReactiveTextField<double>(
                   formControlName: 'defaultPrice',
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Default Price (\$)'),
+                  decoration: const InputDecoration(labelText: 'Default Price (₹)'),
                 ),
                 const SizedBox(height: 32),
                 FilledButton(

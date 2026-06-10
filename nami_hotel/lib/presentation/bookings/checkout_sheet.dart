@@ -104,7 +104,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       children: [
                         Text('Bill Summary', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        _BillRow('Room Charges (${nights}x \$${room.rate.toStringAsFixed(2)})', roomCharges),
+                        _BillRow('Room Charges (${nights}x ₹${room.rate.toStringAsFixed(2)})', roomCharges),
                         _BillRow('Guest Tab Charges', tabTotal),
                         const Divider(height: 24),
                         _BillRow('Grand Total', grandTotal, isTotal: true),
@@ -166,7 +166,7 @@ class _BillRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: style),
-          Text('\$${amount.toStringAsFixed(2)}', style: style),
+          Text('₹${amount.toStringAsFixed(2)}', style: style),
         ],
       ),
     );

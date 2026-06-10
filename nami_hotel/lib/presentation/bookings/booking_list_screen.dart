@@ -97,7 +97,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/hotels/${widget.hotelId}/bookings/new'),
+        onPressed: () => context.push('/hotels/${widget.hotelId}/bookings/new'),
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -119,7 +119,7 @@ class _BookingCard extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.go('/hotels/${booking.hotelId}/bookings/${booking.id}'),
+        onTap: () => context.push('/hotels/${booking.hotelId}/bookings/${booking.id}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -180,7 +180,7 @@ class _BookingCard extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '\$${booking.totalAmount.toStringAsFixed(2)}',
+                    '₹${booking.totalAmount.toStringAsFixed(2)}',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.bold,
