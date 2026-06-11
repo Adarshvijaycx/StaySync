@@ -30,6 +30,7 @@ class BookingDetailScreen extends ConsumerWidget {
     }
 
     final customer = ref.watch(customerProvider(booking.customerId));
+    final customersState = ref.watch(customersProvider);
     final tabItemsAsync = ref.watch(bookingItemsProvider(bookingId));
     
     final theme = Theme.of(context);
@@ -84,7 +85,14 @@ class BookingDetailScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: customer == null
-                    ? const Center(child: CircularProgressIndicator())
+                    ? (customersState.isLoading 
+                        ? const Center(child: CircularProgressIndicator())
+                        : Center(
+                            child: Text(
+                              'Guest details not found or deleted.',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+                            ),
+                          ))
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

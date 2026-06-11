@@ -6,6 +6,7 @@ import '../../core/providers/hotel_providers.dart';
 import '../../core/providers/room_providers.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/room.dart';
+import '../../domain/entities/room_status.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/error_state_widget.dart';
 
@@ -20,6 +21,8 @@ class RoomListScreen extends ConsumerWidget {
     final hotel = ref.watch(hotelProvider(hotelId));
     final currentUser = ref.watch(currentUserProvider);
     final isAdmin = currentUser?.role == UserRole.admin;
+    final isManager = currentUser?.role == UserRole.manager;
+    final canChangeStatus = isAdmin || isManager;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +52,15 @@ class RoomListScreen extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final room = rooms[index];
-                return _RoomCard(room: room, hotelId: hotelId, isAdmin: isAdmin);
+                return _RoomCard(
+                  room: room, 
+                  hotelId: hotelId, 
+                  isAdmin: isAdmin,
+                  canChangeStatus: canChangeStatus,
+                  onStatusChanged: (newStatus) {
+                    ref.read(roomsProvider(hotelId).notifier).updateRoom(room.copyWith(status: newStatus));
+                  },
+                );
               },
             ),
           );
@@ -74,8 +85,16 @@ class _RoomCard extends StatelessWidget {
   final Room room;
   final String hotelId;
   final bool isAdmin;
+  final bool canChangeStatus;
+  final ValueChanged<RoomStatus> onStatusChanged;
 
-  const _RoomCard({required this.room, required this.hotelId, required this.isAdmin});
+  const _RoomCard({
+    required this.room, 
+    required this.hotelId, 
+    required this.isAdmin,
+    required this.canChangeStatus,
+    required this.onStatusChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +167,22 @@ class _RoomCard extends StatelessWidget {
                 ],
               ),
             ),
+            
+            // Status Actions
+            if (canChangeStatus) ...[
+              const SizedBox(width: 8),
+              PopupMenuButton<RoomStatus>(
+                tooltip: 'Change Status',
+                icon: Icon(Icons.sync_alt_rounded, color: room.status.color),
+                onSelected: onStatusChanged,
+                itemBuilder: (context) => RoomStatus.values
+                    .map((s) => PopupMenuItem(
+                          value: s,
+                          child: Text(s.displayName),
+                        ))
+                    .toList(),
+              ),
+            ],
             
             // Admin Actions
             if (isAdmin) ...[

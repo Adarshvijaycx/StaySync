@@ -26,17 +26,19 @@ class BookingItem extends Equatable {
 
   factory BookingItem.fromMap(Map<String, dynamic> map) {
     return BookingItem(
-      id: map['id'] ?? map['\$id'] ?? '',
+      id: map['id'] ?? map[r'$id'] ?? '',
       bookingId: map['booking_id'] ?? '',
       hotelId: map['hotel_id'] ?? '',
-      itemId: map['item_id'] ?? '',
+      itemId: map['item_id'] ?? map['catalogue_item_id'] ?? '',
       itemName: map['item_name'] ?? '',
       unitPrice: (map['unit_price'] as num?)?.toDouble() ?? 0.0,
       quantity: map['quantity'] ?? 1,
       addedByUserId: map['added_by_user_id'] ?? '',
       addedAt: map['added_at'] != null
           ? DateTime.parse(map['added_at'])
-          : DateTime.now(),
+          : map['created_at'] != null
+              ? DateTime.parse(map['created_at'])
+              : DateTime.now(),
     );
   }
 
@@ -51,6 +53,19 @@ class BookingItem extends Equatable {
       'quantity': quantity,
       'added_by_user_id': addedByUserId,
       'added_at': addedAt.toIso8601String(),
+    };
+  }
+
+  /// Only includes fields that exist in the Appwrite collection schema.
+  Map<String, dynamic> toAppwriteMap() {
+    return {
+      'booking_id': bookingId,
+      'catalogue_item_id': itemId,
+      'quantity': quantity,
+      'unit_price': unitPrice,
+      'total_price': totalPrice,
+      'added_by_user_id': addedByUserId,
+      'created_at': addedAt.toIso8601String(),
     };
   }
 

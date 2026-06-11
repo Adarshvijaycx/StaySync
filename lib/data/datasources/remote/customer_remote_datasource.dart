@@ -26,7 +26,7 @@ class CustomerRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.customersCollection,
       documentId: 'unique()',
-      data: customer.toMap()..remove('id'),
+      data: customer.toAppwriteMap(),
     );
     return Customer.fromMap(response.data);
   }
@@ -36,7 +36,7 @@ class CustomerRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.customersCollection,
       documentId: customer.id,
-      data: customer.toMap()..remove('id'),
+      data: customer.toAppwriteMap(),
     );
     return Customer.fromMap(response.data);
   }

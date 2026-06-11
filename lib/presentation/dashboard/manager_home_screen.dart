@@ -2,18 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/providers/hotel_providers.dart';
 import '../../domain/entities/app_user.dart';
 import '../../shared/widgets/sync_status_indicator.dart';
 
 /// Manager home screen — booking management and checkout operations.
 ///
 /// Shell screen for Phase 2; feature content added in Phases 4–6.
-class ManagerHomeScreen extends ConsumerWidget {
+class ManagerHomeScreen extends ConsumerStatefulWidget {
   const ManagerHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ManagerHomeScreen> createState() => _ManagerHomeScreenState();
+}
+
+class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
+  String? _selectedHotelId;
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+    final hotelsAsync = ref.watch(hotelsProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -49,7 +58,47 @@ class ManagerHomeScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildActionsGrid(context, colorScheme, user),
+            
+            // Hotel Selector
+            hotelsAsync.when(
+              data: (hotels) {
+                if (hotels.isEmpty) {
+                  return const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('No hotels found in the database. Please create one as Admin.'),
+                    ),
+                  );
+                }
+                
+                final activeHotelId = _selectedHotelId ?? user?.hotelId ?? hotels.first.id;
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: hotels.any((h) => h.id == activeHotelId) ? activeHotelId : hotels.first.id,
+                      decoration: InputDecoration(
+                        labelText: 'Managing Hotel',
+                        prefixIcon: const Icon(Icons.business_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: hotels.map((h) => DropdownMenuItem(
+                        value: h.id,
+                        child: Text(h.name),
+                      )).toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedHotelId = val);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildActionsGrid(context, colorScheme, activeHotelId),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, st) => Text('Error loading hotels: $e'),
+            ),
           ],
         ),
       ),
@@ -110,7 +159,7 @@ class ManagerHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionsGrid(BuildContext context, ColorScheme colorScheme, AppUser? user) {
+  Widget _buildActionsGrid(BuildContext context, ColorScheme colorScheme, String? hotelId) {
     final actions = [
       _ActionItem(
         icon: Icons.meeting_room_rounded,
@@ -153,7 +202,6 @@ class ManagerHomeScreen extends ConsumerWidget {
         return Card(
           child: InkWell(
             onTap: () {
-              final hotelId = user?.hotelId;
               if (action.label == 'Rooms') {
                 if (hotelId != null && hotelId.isNotEmpty) {
                   context.push('/hotels/$hotelId/rooms');

@@ -25,7 +25,7 @@ class BookingItemRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.bookingItemsCollection,
       documentId: 'unique()',
-      data: item.toMap()..remove('id'),
+      data: item.toAppwriteMap(),
     );
     return BookingItem.fromMap(response.data);
   }
@@ -35,7 +35,7 @@ class BookingItemRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.bookingItemsCollection,
       documentId: item.id,
-      data: item.toMap()..remove('id'),
+      data: item.toAppwriteMap(),
     );
     return BookingItem.fromMap(response.data);
   }

@@ -48,15 +48,27 @@ class CustomerRepository {
 
   Future<Customer> createCustomer(Customer customer) async {
     final remoteCustomer = await _remoteDataSource.createCustomer(customer);
-    await _localDataSource.saveCustomer(remoteCustomer);
-    return remoteCustomer;
+    // Appwrite doesn't store all fields (like dob, address, etc.), so we merge the ID 
+    // and timestamps from the Appwrite response back into the complete original object.
+    final completeCustomer = customer.copyWith(
+      id: remoteCustomer.id,
+      createdAt: remoteCustomer.createdAt,
+      updatedAt: remoteCustomer.updatedAt,
+    );
+    await _localDataSource.saveCustomer(completeCustomer);
+    return completeCustomer;
   }
 
   Future<Customer> updateCustomer(Customer customer) async {
     final updated = customer.copyWith(updatedAt: DateTime.now());
     final remoteCustomer = await _remoteDataSource.updateCustomer(updated);
-    await _localDataSource.saveCustomer(remoteCustomer);
-    return remoteCustomer;
+    final completeCustomer = updated.copyWith(
+      id: remoteCustomer.id,
+      createdAt: remoteCustomer.createdAt,
+      updatedAt: remoteCustomer.updatedAt,
+    );
+    await _localDataSource.saveCustomer(completeCustomer);
+    return completeCustomer;
   }
 
   Future<String> uploadFile(String bucketId, String filePath) async {

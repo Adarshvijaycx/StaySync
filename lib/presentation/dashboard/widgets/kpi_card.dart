@@ -48,13 +48,19 @@ class KPICard extends StatelessWidget {
                 ),
               ],
             ),
-            const Spacer(),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: FittedBox(
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                ),
+              ),
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 4),

@@ -25,7 +25,7 @@ class ItemCatalogueRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.itemCatalogueCollection,
       documentId: 'unique()',
-      data: item.toMap()..remove('id'),
+      data: item.toAppwriteMap(),
     );
     return ItemCatalogue.fromMap(response.data);
   }
@@ -35,7 +35,7 @@ class ItemCatalogueRemoteDataSource {
       databaseId: AppwriteConstants.databaseId,
       collectionId: AppwriteConstants.itemCatalogueCollection,
       documentId: item.id,
-      data: item.toMap()..remove('id'),
+      data: item.toAppwriteMap(),
     );
     return ItemCatalogue.fromMap(response.data);
   }

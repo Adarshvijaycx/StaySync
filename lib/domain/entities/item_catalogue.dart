@@ -37,12 +37,15 @@ class ItemCatalogue extends Equatable {
 
   factory ItemCatalogue.fromMap(Map<String, dynamic> map) {
     return ItemCatalogue(
-      id: map['id'] ?? map['\$id'] ?? '',
+      id: map['id'] ?? map[r'$id'] ?? '',
       hotelId: map['hotel_id'] ?? '',
       name: map['name'] ?? '',
       category: map['category'] ?? '',
-      defaultPrice: (map['default_price'] as num?)?.toDouble() ?? 0.0,
-      isActive: map['is_active'] == 1 || map['is_active'] == true,
+      defaultPrice: (map['default_price'] as num?)?.toDouble() 
+          ?? (map['price'] as num?)?.toDouble() 
+          ?? 0.0,
+      isActive: map['is_active'] == 1 || map['is_active'] == true 
+          || map['is_available'] == 1 || map['is_available'] == true,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : DateTime.now(),
@@ -60,6 +63,19 @@ class ItemCatalogue extends Equatable {
       'category': category,
       'default_price': defaultPrice,
       'is_active': isActive ? 1 : 0, // SQLite boolean compatibility
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Only includes fields that exist in the Appwrite collection schema.
+  Map<String, dynamic> toAppwriteMap() {
+    return {
+      'hotel_id': hotelId,
+      'name': name,
+      'category': category,
+      'price': defaultPrice,
+      'is_available': isActive ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

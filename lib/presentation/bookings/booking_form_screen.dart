@@ -15,7 +15,8 @@ import '../../domain/entities/id_proof_type.dart';
 import '../../domain/entities/payment_mode.dart';
 import '../../domain/entities/room.dart';
 import '../../domain/entities/room_status.dart';
-
+import '../../core/constants/appwrite_constants.dart';
+import '../../data/repositories/customer_repository.dart';
 class BookingFormScreen extends ConsumerStatefulWidget {
   final String hotelId;
   final String? bookingId;
@@ -55,6 +56,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       'address': FormControl<String>(validators: [Validators.required]),
       'pincode': FormControl<String>(validators: [Validators.required, Validators.pattern(r'^\d{6}$')]),
       'id_proof_type': FormControl<IdProofType>(value: IdProofType.aadhaar, validators: [Validators.required]),
+      'id_proof_number': FormControl<String>(validators: [Validators.required]),
 
       // Booking Info
       'room_id': FormControl<String>(validators: [Validators.required]),
@@ -92,6 +94,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
             'address': _existingCustomer!.address,
             'pincode': _existingCustomer!.pincode,
             'id_proof_type': _existingCustomer!.idProofType,
+            'id_proof_number': _existingCustomer!.idProofNumber,
             'room_id': _existingBooking!.roomId,
             'guests_count': _existingBooking!.guestsCount,
             'check_in': _existingBooking!.checkIn,
@@ -106,7 +109,30 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   }
 
   Future<void> _pickImage(bool isIdProof) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery); // Gallery for emulator testing
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       setState(() {
         if (isIdProof) {
@@ -136,15 +162,29 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       String? idUrl = _existingCustomer?.idProofUrl;
       String? photoUrl = _existingCustomer?.photoUrl;
 
-      // Note: we'd use customerRepository for uploadFile in real scenario.
-      // Skipping actual Appwrite upload for the emulator demo, using placeholder local paths.
-      if (_idProofImage != null) idUrl = _idProofImage!.path;
-      if (_guestPhoto != null) photoUrl = _guestPhoto!.path;
+      final customerRepo = ref.read(customerRepositoryProvider);
+
+      if (_idProofImage != null) {
+        final fileId = await customerRepo.uploadFile(
+          AppwriteConstants.idProofsBucket, 
+          _idProofImage!.path,
+        );
+        idUrl = '${AppwriteConstants.endpoint}/storage/buckets/${AppwriteConstants.idProofsBucket}/files/$fileId/view?project=${AppwriteConstants.projectId}';
+      }
+      
+      if (_guestPhoto != null) {
+        final fileId = await customerRepo.uploadFile(
+          AppwriteConstants.guestPhotosBucket, 
+          _guestPhoto!.path,
+        );
+        photoUrl = '${AppwriteConstants.endpoint}/storage/buckets/${AppwriteConstants.guestPhotosBucket}/files/$fileId/view?project=${AppwriteConstants.projectId}';
+      }
 
       // 2. Save Customer
       final isNewCustomer = _existingCustomer == null;
       final customerData = isNewCustomer
           ? Customer.empty().copyWith(
+              hotelId: widget.hotelId,
               name: value['guest_name'] as String,
               dob: value['dob'] as DateTime,
               phone: value['phone'] as String,
@@ -153,6 +193,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               address: value['address'] as String,
               pincode: value['pincode'] as String,
               idProofType: value['id_proof_type'] as IdProofType,
+              idProofNumber: value['id_proof_number'] as String,
               idProofUrl: idUrl,
               photoUrl: photoUrl,
             )
@@ -165,15 +206,18 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               address: value['address'] as String,
               pincode: value['pincode'] as String,
               idProofType: value['id_proof_type'] as IdProofType,
+              idProofNumber: value['id_proof_number'] as String,
               idProofUrl: idUrl,
               photoUrl: photoUrl,
             );
 
       // Save customer to DB
+      Customer savedCustomer;
       if (isNewCustomer) {
-        await ref.read(customersProvider.notifier).createCustomer(customerData);
+        savedCustomer = await ref.read(customersProvider.notifier).createCustomer(customerData);
       } else {
         await ref.read(customersProvider.notifier).updateCustomer(customerData);
+        savedCustomer = customerData;
       }
 
       // 3. Save Booking
@@ -181,8 +225,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       final bookingData = isNewBooking
           ? Booking.empty(hotelId: widget.hotelId).copyWith(
               roomId: value['room_id'] as String,
-              customerId: customerData.id, // we might not have the ID if we didn't await return value properly, but assuming createCustomer worked. Wait, createCustomer returns the entity but our provider method is void. Let's assume customerData.id is valid or we use a UUID. Actually, the provider method is void. I'll rely on Appwrite auto-generating if ID is empty, but then I need the returned ID.
-              // For SQLite/Appwrite sync, let's just generate a UUID here to be safe if it's new.
+              customerId: savedCustomer.id,
               bookedByUserId: currentUser.userId,
               checkIn: value['check_in'] as DateTime,
               checkOut: value['check_out'] as DateTime,
@@ -200,13 +243,10 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
             );
 
       if (isNewBooking) {
-        // Just mock the customer ID if new for the sake of the demo, 
-        // normally we would return the ID from the provider method.
-        final b = bookingData.copyWith(customerId: isNewCustomer ? DateTime.now().millisecondsSinceEpoch.toString() : customerData.id);
-        await ref.read(bookingsProvider(widget.hotelId).notifier).createBooking(b);
+        await ref.read(bookingsProvider(widget.hotelId).notifier).createBooking(bookingData);
         
         // Update Room Status
-        final room = _availableRooms.firstWhere((r) => r.id == b.roomId);
+        final room = _availableRooms.firstWhere((r) => r.id == bookingData.roomId);
         await ref.read(roomsProvider(widget.hotelId).notifier).updateRoom(room.copyWith(status: RoomStatus.occupied));
       } else {
         await ref.read(bookingsProvider(widget.hotelId).notifier).updateBooking(bookingData);
@@ -255,7 +295,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Guest Information (KYC)', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text('Guest Information', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               
               ReactiveTextField<String>(
@@ -314,13 +354,22 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               ),
               const SizedBox(height: 24),
 
-              Text('KYC Documents', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text('Documents', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               
               ReactiveDropdownField<IdProofType>(
                 formControlName: 'id_proof_type',
                 decoration: const InputDecoration(labelText: 'ID Proof Type', prefixIcon: Icon(Icons.badge_rounded)),
                 items: IdProofType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.displayName))).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              ReactiveTextField<String>(
+                formControlName: 'id_proof_number',
+                decoration: const InputDecoration(labelText: 'ID Proof Number', prefixIcon: Icon(Icons.numbers_rounded)),
+                validationMessages: {
+                  'required': (_) => 'ID proof number is required',
+                },
               ),
               const SizedBox(height: 16),
 
@@ -351,7 +400,11 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
 
               ReactiveDropdownField<String>(
                 formControlName: 'room_id',
-                decoration: const InputDecoration(labelText: 'Assign Room', prefixIcon: Icon(Icons.meeting_room_rounded)),
+                decoration: InputDecoration(
+                  labelText: 'Assign Room', 
+                  prefixIcon: const Icon(Icons.meeting_room_rounded),
+                  hintText: _availableRooms.isEmpty ? 'No available rooms. Please add a room first.' : null,
+                ),
                 items: _availableRooms.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.roomNumber} - ${r.type.displayName} (₹${r.rate})'))).toList(),
               ),
               const SizedBox(height: 16),

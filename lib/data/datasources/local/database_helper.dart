@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 /// Singleton helper for SQLite database setup and migration.
 class DatabaseHelper {
   static const String _dbName = 'nami_hotel.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 4;
 
   Database? _database;
 
@@ -61,6 +61,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE customers (
         id TEXT PRIMARY KEY,
+        hotel_id TEXT NOT NULL,
         name TEXT NOT NULL,
         dob TEXT NOT NULL,
         phone TEXT NOT NULL,
@@ -69,6 +70,7 @@ class DatabaseHelper {
         address TEXT NOT NULL,
         pincode TEXT NOT NULL,
         id_proof_type TEXT NOT NULL,
+        id_proof_number TEXT NOT NULL DEFAULT '',
         id_proof_url TEXT,
         photo_url TEXT,
         created_at TEXT NOT NULL,
@@ -156,6 +158,14 @@ class DatabaseHelper {
           retry_count INTEGER NOT NULL DEFAULT 0
         )
       ''');
+    }
+    if (oldVersion < 3) {
+      // Add hotel_id to customers
+      await db.execute('ALTER TABLE customers ADD COLUMN hotel_id TEXT NOT NULL DEFAULT \'\'');
+    }
+    if (oldVersion < 4) {
+      // Add id_proof_number to customers
+      await db.execute('ALTER TABLE customers ADD COLUMN id_proof_number TEXT NOT NULL DEFAULT \'\'');
     }
   }
 }

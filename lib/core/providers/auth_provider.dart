@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../domain/entities/app_user.dart';
+import 'hotel_providers.dart';
 
 /// Possible states for the authentication flow.
 sealed class AuthState {
@@ -38,9 +39,11 @@ class AuthUnauthenticated extends AuthState {
 /// Exposes [login] and [logout] methods for UI.
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
+  final Ref _ref;
 
-  AuthNotifier({required this._authRepository})
-      :
+  AuthNotifier({required AuthRepository authRepository, required Ref ref})
+      : _authRepository = authRepository,
+        _ref = ref,
         super(const AuthInitial()) {
     _checkExistingSession();
   }
@@ -71,6 +74,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     // --- TEMPORARY MOCK LOGIN BYPASS ---
     // Since Appwrite is not fully configured yet, use these credentials to test:
+    
+    // Get the first available hotel dynamically for mock testing
+    String mockHotelId = 'hotel_xyz';
+    try {
+      final hotels = await _ref.read(hotelsProvider.future);
+      if (hotels.isNotEmpty) {
+        mockHotelId = hotels.first.id;
+      }
+    } catch (_) {}
+
     if (email == 'admin@nami.com') {
       state = AuthAuthenticated(AppUser(
         userId: 'admin_123',
@@ -86,7 +99,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         name: 'Hotel Manager',
         role: UserRole.manager,
-        hotelId: 'hotel_xyz',
+        hotelId: mockHotelId,
         isActive: true,
       ));
       return;
@@ -96,7 +109,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         name: 'Front Desk Staff',
         role: UserRole.staff,
-        hotelId: 'hotel_xyz',
+        hotelId: mockHotelId,
         isActive: true,
       ));
       return;
@@ -133,6 +146,7 @@ final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     authRepository: ref.watch(authRepositoryProvider),
+    ref: ref,
   );
 });
 

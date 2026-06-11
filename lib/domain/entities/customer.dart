@@ -4,6 +4,7 @@ import 'id_proof_type.dart';
 /// Represents a guest/customer in the system.
 class Customer extends Equatable {
   final String id;
+  final String hotelId;
   final String name;
   final DateTime dob;
   final String phone;
@@ -12,6 +13,7 @@ class Customer extends Equatable {
   final String address;
   final String pincode;
   final IdProofType idProofType;
+  final String idProofNumber;
   final String? idProofUrl;
   final String? photoUrl;
   final DateTime createdAt;
@@ -19,6 +21,7 @@ class Customer extends Equatable {
 
   const Customer({
     required this.id,
+    required this.hotelId,
     required this.name,
     required this.dob,
     required this.phone,
@@ -27,6 +30,7 @@ class Customer extends Equatable {
     required this.address,
     required this.pincode,
     required this.idProofType,
+    required this.idProofNumber,
     this.idProofUrl,
     this.photoUrl,
     required this.createdAt,
@@ -35,27 +39,31 @@ class Customer extends Equatable {
 
   factory Customer.empty() => Customer(
         id: '',
+        hotelId: '',
         name: '',
         dob: DateTime.now().subtract(const Duration(days: 365 * 18)), // default 18y old
         phone: '',
         address: '',
         pincode: '',
         idProofType: IdProofType.aadhaar,
+        idProofNumber: '',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
   factory Customer.fromMap(Map<String, dynamic> map) {
     return Customer(
-      id: map['id'] ?? map['\$id'] ?? '',
+      id: map['id'] ?? map[r'$id'] ?? '',
+      hotelId: map['hotel_id'] ?? '',
       name: map['name'] ?? '',
-      dob: DateTime.parse(map['dob']),
+      dob: map['dob'] != null ? DateTime.parse(map['dob']) : DateTime.now(),
       phone: map['phone'] ?? '',
       email: map['email'],
       parentName: map['parent_name'],
       address: map['address'] ?? '',
       pincode: map['pincode'] ?? '',
       idProofType: IdProofType.fromString(map['id_proof_type'] ?? ''),
+      idProofNumber: map['id_proof_number'] ?? '',
       idProofUrl: map['id_proof_url'],
       photoUrl: map['photo_url'],
       createdAt: map['created_at'] != null
@@ -70,6 +78,7 @@ class Customer extends Equatable {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'hotel_id': hotelId,
       'name': name,
       'dob': dob.toIso8601String(),
       'phone': phone,
@@ -78,6 +87,24 @@ class Customer extends Equatable {
       'address': address,
       'pincode': pincode,
       'id_proof_type': idProofType.name,
+      'id_proof_number': idProofNumber,
+      'id_proof_url': idProofUrl,
+      'photo_url': photoUrl,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Only includes fields that exist in the Appwrite collection schema.
+  /// Fields like dob, parent_name, address, pincode are stored locally only.
+  Map<String, dynamic> toAppwriteMap() {
+    return {
+      'hotel_id': hotelId,
+      'name': name,
+      'phone': phone,
+      'email': email,
+      'id_proof_type': idProofType.name,
+      'id_proof_number': idProofNumber,
       'id_proof_url': idProofUrl,
       'photo_url': photoUrl,
       'created_at': createdAt.toIso8601String(),
@@ -87,6 +114,7 @@ class Customer extends Equatable {
 
   Customer copyWith({
     String? id,
+    String? hotelId,
     String? name,
     DateTime? dob,
     String? phone,
@@ -95,6 +123,7 @@ class Customer extends Equatable {
     String? address,
     String? pincode,
     IdProofType? idProofType,
+    String? idProofNumber,
     String? idProofUrl,
     String? photoUrl,
     DateTime? createdAt,
@@ -102,6 +131,7 @@ class Customer extends Equatable {
   }) {
     return Customer(
       id: id ?? this.id,
+      hotelId: hotelId ?? this.hotelId,
       name: name ?? this.name,
       dob: dob ?? this.dob,
       phone: phone ?? this.phone,
@@ -110,6 +140,7 @@ class Customer extends Equatable {
       address: address ?? this.address,
       pincode: pincode ?? this.pincode,
       idProofType: idProofType ?? this.idProofType,
+      idProofNumber: idProofNumber ?? this.idProofNumber,
       idProofUrl: idProofUrl ?? this.idProofUrl,
       photoUrl: photoUrl ?? this.photoUrl,
       createdAt: createdAt ?? this.createdAt,
@@ -129,6 +160,7 @@ class Customer extends Equatable {
   @override
   List<Object?> get props => [
         id,
+        hotelId,
         name,
         dob,
         phone,
@@ -137,6 +169,7 @@ class Customer extends Equatable {
         address,
         pincode,
         idProofType,
+        idProofNumber,
         idProofUrl,
         photoUrl,
         createdAt,

@@ -20,13 +20,15 @@ class CustomersNotifier extends AsyncNotifier<List<Customer>> {
     state = await AsyncValue.guard(() => _repository.getCustomers(forceRefresh: true));
   }
 
-  Future<void> createCustomer(Customer customer) async {
+  Future<Customer> createCustomer(Customer customer) async {
     try {
       final newCustomer = await _repository.createCustomer(customer);
       final currentList = state.value ?? [];
       state = AsyncValue.data([...currentList, newCustomer]);
+      return newCustomer;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
