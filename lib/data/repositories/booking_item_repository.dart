@@ -107,7 +107,7 @@ final bookingItemRepositoryProvider = Provider<BookingItemRepository>((ref) {
   return BookingItemRepository(
     localDataSource: ref.watch(bookingItemLocalDataSourceProvider),
     remoteDataSource: ref.watch(bookingItemRemoteDataSourceProvider),
-    syncQueue: ref.watch(syncQueueProvider),
-    syncNotifier: ref.watch(syncServiceProvider.notifier),
+    syncQueue: ref.read(syncQueueProvider),
+    syncNotifier: ref.read(syncServiceProvider.notifier),
   );
 });

@@ -19,12 +19,12 @@ class CheckoutSheet extends ConsumerStatefulWidget {
 
 class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   bool _isLoading = false;
+  DateTime _selectedCheckoutDate = DateTime.now();
 
-  Future<void> _processCheckout(double finalTotal) async {
+  Future<void> _processCheckout(double finalTotal, DateTime checkoutTime) async {
     setState(() => _isLoading = true);
     try {
       // 1. Update Booking
-      final checkoutTime = DateTime.now();
       final updatedBooking = widget.booking.copyWith(
         status: BookingStatus.checkedOut,
         actualCheckOut: checkoutTime,
@@ -57,6 +57,28 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     }
   }
 
+  Future<void> _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedCheckoutDate,
+      firstDate: widget.booking.checkIn,
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedCheckoutDate),
+    );
+    if (time == null) return;
+    
+    setState(() {
+      _selectedCheckoutDate = DateTime(
+        date.year, date.month, date.day, time.hour, time.minute
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -85,10 +107,16 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             roomsState.when(
               data: (rooms) {
                 final room = rooms.firstWhere((r) => r.id == widget.booking.roomId);
-                // Calculate nights (minimum 1)
-                final checkoutDate = DateTime.now();
-                int nights = checkoutDate.difference(widget.booking.checkIn).inDays;
-                if (nights <= 0) nights = 1;
+                final checkoutDate = _selectedCheckoutDate;
+                final inDate = DateTime(widget.booking.checkIn.year, widget.booking.checkIn.month, widget.booking.checkIn.day);
+                final outDate = DateTime(checkoutDate.year, checkoutDate.month, checkoutDate.day);
+                
+                int nights = outDate.difference(inDate).inDays;
+                
+                if (widget.booking.checkIn.hour < 12) nights += 1;
+                if (checkoutDate.hour > 11 || (checkoutDate.hour == 11 && checkoutDate.minute > 0)) nights += 1;
+                if (nights < 1) nights = 1;
+                
                 final roomCharges = nights * room.rate;
 
                 return tabItemsState.when(
@@ -102,6 +130,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Checkout Date & Time'),
+                          subtitle: Text('${_selectedCheckoutDate.day}/${_selectedCheckoutDate.month}/${_selectedCheckoutDate.year} ${_selectedCheckoutDate.hour > 12 ? _selectedCheckoutDate.hour - 12 : _selectedCheckoutDate.hour == 0 ? 12 : _selectedCheckoutDate.hour}:${_selectedCheckoutDate.minute.toString().padLeft(2, '0')} ${_selectedCheckoutDate.hour >= 12 ? 'PM' : 'AM'}'),
+                          trailing: const Icon(Icons.edit_calendar),
+                          onTap: _pickDateTime,
+                        ),
+                        const Divider(),
                         Text('Bill Summary', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         _BillRow('Room Charges (${nights}x ₹${room.rate.toStringAsFixed(2)})', roomCharges),
@@ -113,7 +149,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                           const Center(child: CircularProgressIndicator())
                         else ...[
                           FilledButton(
-                            onPressed: () => _processCheckout(grandTotal),
+                            onPressed: () => _processCheckout(grandTotal, checkoutDate),
                             style: FilledButton.styleFrom(
                               backgroundColor: theme.colorScheme.error,
                               foregroundColor: theme.colorScheme.onError,

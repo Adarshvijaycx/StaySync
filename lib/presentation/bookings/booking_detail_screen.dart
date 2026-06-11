@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/providers/booking_providers.dart';
 import '../../core/providers/customer_providers.dart';
 import '../../core/providers/item_providers.dart';
+import '../../core/providers/room_providers.dart';
 import '../../domain/entities/booking_status.dart';
 import '../../shared/widgets/empty_state_widget.dart';
 import '../../shared/widgets/error_state_widget.dart';
@@ -30,6 +31,8 @@ class BookingDetailScreen extends ConsumerWidget {
     }
 
     final customer = ref.watch(customerProvider(booking.customerId));
+    final room = ref.watch(roomProvider((hotelId: hotelId, roomId: booking.roomId)));
+
     final customersState = ref.watch(customersProvider);
     final tabItemsAsync = ref.watch(bookingItemsProvider(bookingId));
     
@@ -122,7 +125,7 @@ class BookingDetailScreen extends ConsumerWidget {
                     if (booking.actualCheckOut != null)
                       _DetailRow('Actual Check-out', dateFormat.format(booking.actualCheckOut!)),
                     _DetailRow('Guests', '${booking.guestsCount} Person(s)'),
-                    _DetailRow('Room ID', booking.roomId),
+                    _DetailRow('Room No.', room?.roomNumber ?? booking.roomId),
                     const Divider(height: 24),
                     _DetailRow('Payment Mode', booking.paymentMode.displayName),
                     _DetailRow(

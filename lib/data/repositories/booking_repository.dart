@@ -28,7 +28,13 @@ class BookingRepository {
 
   Future<List<Booking>> getBookingsForHotel(String hotelId, {bool forceRefresh = false}) async {
     try {
-      if (forceRefresh) {
+      // Check if there are pending booking sync operations
+      final pendingOps = await _syncQueue.getPendingOperations();
+      final hasPendingBookingOps = pendingOps.any(
+        (op) => op.collectionId == AppwriteConstants.bookingsCollection,
+      );
+
+      if (forceRefresh && !hasPendingBookingOps) {
         final remoteData = await _remoteDataSource.getBookingsForHotel(hotelId);
         await _localDataSource.clearBookingsForHotel(hotelId);
         await _localDataSource.saveBookings(remoteData);
@@ -37,7 +43,9 @@ class BookingRepository {
 
       final localData = await _localDataSource.getBookingsForHotel(hotelId);
       if (localData.isNotEmpty) {
-        _syncInBackground(hotelId);
+        if (!hasPendingBookingOps) {
+          _syncInBackground(hotelId);
+        }
         return localData;
       }
 
@@ -53,6 +61,17 @@ class BookingRepository {
 
   Future<void> _syncInBackground(String hotelId) async {
     try {
+      // CRITICAL: Do NOT overwrite local data if there are pending sync operations.
+      // Otherwise we'd replace locally-updated records (e.g. checkedOut bookings)
+      // with stale data from the server that hasn't received our updates yet.
+      final pendingOps = await _syncQueue.getPendingOperations();
+      final hasPendingBookingOps = pendingOps.any(
+        (op) => op.collectionId == AppwriteConstants.bookingsCollection,
+      );
+      if (hasPendingBookingOps) {
+        return; // Skip background sync — local data is ahead of server
+      }
+
       final remoteData = await _remoteDataSource.getBookingsForHotel(hotelId);
       await _localDataSource.clearBookingsForHotel(hotelId);
       await _localDataSource.saveBookings(remoteData);
@@ -92,7 +111,7 @@ class BookingRepository {
     await _syncQueue.enqueue(
       collectionId: AppwriteConstants.bookingsCollection,
       operationType: 'create',
-      payload: json.encode(localBooking.toMap()),
+      payload: json.encode(localBooking.toAppwriteMap()),
     );
 
     // Trigger sync
@@ -116,7 +135,7 @@ class BookingRepository {
     await _syncQueue.enqueue(
       collectionId: AppwriteConstants.bookingsCollection,
       operationType: 'update',
-      payload: json.encode(updated.toMap()),
+      payload: json.encode(updated.toAppwriteMap()),
     );
 
     // Trigger sync
@@ -130,7 +149,7 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(
     localDataSource: ref.watch(bookingLocalDataSourceProvider),
     remoteDataSource: ref.watch(bookingRemoteDataSourceProvider),
-    syncQueue: ref.watch(syncQueueProvider),
-    syncNotifier: ref.watch(syncServiceProvider.notifier),
+    syncQueue: ref.read(syncQueueProvider),
+    syncNotifier: ref.read(syncServiceProvider.notifier),
   );
 });

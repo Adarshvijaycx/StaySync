@@ -60,6 +60,9 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
         if (docId != null) {
           data.remove('id');
         }
+        
+        // HOTFIX: Remove fields that are not in Appwrite schema to rescue old stuck payloads
+        data.remove('actual_check_out');
 
         if (op.operationType == 'create') {
           await _databases.createDocument(
@@ -69,16 +72,20 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
             data: data,
           );
         } else if (op.operationType == 'update') {
+          if (docId == null) {
+            print('Skipping update op ${op.id}: missing document ID');
+            await _syncQueue.removeOperation(op.id);
+            continue;
+          }
           try {
             await _databases.updateDocument(
               databaseId: AppwriteConstants.databaseId,
               collectionId: op.collectionId,
-              documentId: docId!,
+              documentId: docId,
               data: data,
             );
           } on AppwriteException catch (e) {
             if (e.code == 404) {
-              // Document doesn't exist on server, we should probably recreate it
               await _databases.createDocument(
                 databaseId: AppwriteConstants.databaseId,
                 collectionId: op.collectionId,
@@ -90,18 +97,29 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
             }
           }
         } else if (op.operationType == 'delete') {
+          if (docId == null) {
+            print('Skipping delete op ${op.id}: missing document ID');
+            await _syncQueue.removeOperation(op.id);
+            continue;
+          }
           await _databases.deleteDocument(
             databaseId: AppwriteConstants.databaseId,
             collectionId: op.collectionId,
-            documentId: docId!,
+            documentId: docId,
           );
         }
         
         await _syncQueue.removeOperation(op.id);
       } catch (e) {
-        debugPrint('Sync error on op \${op.id}: \$e');
+        if (e is AppwriteException) {
+          print('Sync error on op ${op.id}: ${e.message} (Code: ${e.code}, Type: ${e.type})');
+        } else {
+          print('Sync error on op ${op.id}: $e');
+        }
+        
         if (op.retryCount >= 3) {
-          state = SyncStatus.failed;
+          print('Dropping operation ${op.id} after 3 failed retries to prevent queue blocking.');
+          await _syncQueue.removeOperation(op.id);
         } else {
           await _syncQueue.incrementRetryCount(op.id);
         }

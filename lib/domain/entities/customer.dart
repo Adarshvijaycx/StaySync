@@ -99,6 +99,7 @@ class Customer extends Equatable {
   /// Fields like dob, parent_name, address, pincode are stored locally only.
   Map<String, dynamic> toAppwriteMap() {
     return {
+      'id': id,
       'hotel_id': hotelId,
       'name': name,
       'phone': phone,

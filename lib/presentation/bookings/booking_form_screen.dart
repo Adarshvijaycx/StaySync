@@ -12,6 +12,7 @@ import '../../core/providers/room_providers.dart';
 import '../../domain/entities/booking.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/id_proof_type.dart';
+import '../../domain/entities/booking_status.dart';
 import '../../domain/entities/payment_mode.dart';
 import '../../domain/entities/room.dart';
 import '../../domain/entities/room_status.dart';
@@ -32,6 +33,9 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   Booking? _existingBooking;
   Customer? _existingCustomer;
   bool _isLoading = true;
+  
+  List<Room> _allRooms = [];
+  List<Booking> _allBookings = [];
   List<Room> _availableRooms = [];
 
   final ImagePicker _picker = ImagePicker();
@@ -42,10 +46,15 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   void initState() {
     super.initState();
     _initForm();
+    _setupListeners();
     _loadData();
   }
 
   void _initForm() {
+    final now = DateTime.now();
+    final today12PM = DateTime(now.year, now.month, now.day, 12, 0);
+    final tomorrow11AM = DateTime(now.year, now.month, now.day + 1, 11, 0);
+
     _form = FormGroup({
       // Customer Info
       'guest_name': FormControl<String>(validators: [Validators.required]),
@@ -60,18 +69,104 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
 
       // Booking Info
       'room_id': FormControl<String>(validators: [Validators.required]),
+      'room_rate': FormControl<double>(value: 0.0, validators: [Validators.required, Validators.min(0)]),
       'guests_count': FormControl<int>(value: 1, validators: [Validators.required, Validators.min(1)]),
-      'check_in': FormControl<DateTime>(value: DateTime.now(), validators: [Validators.required]),
-      'check_out': FormControl<DateTime>(value: DateTime.now().add(const Duration(days: 1)), validators: [Validators.required]),
+      'check_in': FormControl<DateTime>(value: today12PM, validators: [Validators.required]),
+      'check_out': FormControl<DateTime>(value: tomorrow11AM, validators: [Validators.required]),
       'payment_mode': FormControl<PaymentMode>(value: PaymentMode.cash, validators: [Validators.required]),
       'total_amount': FormControl<double>(value: 0.0, validators: [Validators.required, Validators.min(0)]),
     });
   }
 
+  void _setupListeners() {
+    _form.control('room_id').valueChanges.listen((roomId) {
+      if (roomId != null && roomId is String) {
+        final room = _availableRooms.cast<Room?>().firstWhere((r) => r?.id == roomId, orElse: () => null);
+        if (room != null) {
+          _form.control('room_rate').value = room.rate;
+        }
+      }
+    });
+
+    _form.control('room_rate').valueChanges.listen((_) => _calculateTotal());
+    
+    _form.control('check_in').valueChanges.listen((_) {
+      _calculateTotal();
+      _updateAvailableRooms();
+    });
+    
+    _form.control('check_out').valueChanges.listen((_) {
+      _calculateTotal();
+      _updateAvailableRooms();
+    });
+  }
+
+  void _updateAvailableRooms() {
+    final checkIn = _form.control('check_in').value as DateTime?;
+    final checkOut = _form.control('check_out').value as DateTime?;
+    if (checkIn == null || checkOut == null) return;
+
+    final overlappingBookingRoomIds = _allBookings.where((b) {
+      // Ignore completed or cancelled bookings
+      if (b.status == BookingStatus.checkedOut || b.status == BookingStatus.cancelled) return false;
+      
+      // Ignore the current booking being edited
+      if (_existingBooking != null && b.id == _existingBooking!.id) return false;
+
+      // Check date overlap
+      return b.checkIn.isBefore(checkOut) && b.checkOut.isAfter(checkIn);
+    }).map((b) => b.roomId).toSet();
+
+    setState(() {
+      _availableRooms = _allRooms.where((room) {
+        if (overlappingBookingRoomIds.contains(room.id)) return false;
+        // Optionally: if check-in is today, we could enforce room.status == RoomStatus.available
+        // But to allow booking a room that's just "cleaning", we allow all rooms without overlaps.
+        return true;
+      }).toList();
+
+      // Clear selected room if it's no longer available for the new dates
+      final currentSelectedRoom = _form.control('room_id').value as String?;
+      if (currentSelectedRoom != null && !_availableRooms.any((r) => r.id == currentSelectedRoom)) {
+        _form.control('room_id').value = null;
+        _form.control('room_rate').value = 0.0;
+      }
+    });
+  }
+
+  void _calculateTotal() {
+    final checkIn = _form.control('check_in').value as DateTime?;
+    final checkOut = _form.control('check_out').value as DateTime?;
+    final roomRate = _form.control('room_rate').value as double?;
+
+    if (checkIn != null && checkOut != null && roomRate != null) {
+      final inDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
+      final outDate = DateTime(checkOut.year, checkOut.month, checkOut.day);
+      
+      // Base nights difference
+      int calculatedDays = outDate.difference(inDate).inDays;
+      
+      // If check-in is before 12:00 PM, charge an extra day (early check-in)
+      if (checkIn.hour < 12) {
+        calculatedDays += 1;
+      }
+      
+      // If check-out is after 11:00 AM, charge an extra day (late check-out)
+      // We check if it's strictly > 11:00. (So 11:00 is fine, 11:01 is late).
+      if (checkOut.hour > 11 || (checkOut.hour == 11 && checkOut.minute > 0)) {
+        calculatedDays += 1;
+      }
+      
+      if (calculatedDays < 1) calculatedDays = 1; // Minimum 1 day charge
+      
+      _form.control('total_amount').value = calculatedDays * roomRate;
+    }
+  }
+
   Future<void> _loadData() async {
-    // Load Rooms
-    final roomsState = await ref.read(roomsProvider(widget.hotelId).future);
-    _availableRooms = roomsState.where((r) => r.status == RoomStatus.available).toList();
+    // Load Rooms and Bookings
+    _allRooms = await ref.read(roomsProvider(widget.hotelId).future);
+    _allBookings = await ref.read(bookingsProvider(widget.hotelId).future);
 
     if (widget.bookingId != null && widget.bookingId != 'new') {
       _existingBooking = ref.read(bookingProvider((hotelId: widget.hotelId, bookingId: widget.bookingId!)));
@@ -79,12 +174,18 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
         _existingCustomer = ref.read(customerProvider(_existingBooking!.customerId));
         
         // If editing, we also want to allow selecting the currently booked room
-        final currentRoom = roomsState.firstWhere((r) => r.id == _existingBooking!.roomId);
+        final currentRoom = _allRooms.firstWhere((r) => r.id == _existingBooking!.roomId);
         if (!_availableRooms.any((r) => r.id == currentRoom.id)) {
           _availableRooms.add(currentRoom);
         }
 
         if (_existingCustomer != null) {
+          final inDate = DateTime(_existingBooking!.checkIn.year, _existingBooking!.checkIn.month, _existingBooking!.checkIn.day);
+          final outDate = DateTime(_existingBooking!.checkOut.year, _existingBooking!.checkOut.month, _existingBooking!.checkOut.day);
+          int nights = outDate.difference(inDate).inDays;
+          if (nights < 1) nights = 1;
+          final calculatedRate = _existingBooking!.totalAmount / nights;
+
           _form.updateValue({
             'guest_name': _existingCustomer!.name,
             'dob': _existingCustomer!.dob,
@@ -96,6 +197,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
             'id_proof_type': _existingCustomer!.idProofType,
             'id_proof_number': _existingCustomer!.idProofNumber,
             'room_id': _existingBooking!.roomId,
+            'room_rate': calculatedRate,
             'guests_count': _existingBooking!.guestsCount,
             'check_in': _existingBooking!.checkIn,
             'check_out': _existingBooking!.checkOut,
@@ -105,6 +207,8 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
         }
       }
     }
+
+    _updateAvailableRooms();
     setState(() => _isLoading = false);
   }
 
@@ -359,6 +463,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               
               ReactiveDropdownField<IdProofType>(
                 formControlName: 'id_proof_type',
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'ID Proof Type', prefixIcon: Icon(Icons.badge_rounded)),
                 items: IdProofType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.displayName))).toList(),
               ),
@@ -400,12 +505,20 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
 
               ReactiveDropdownField<String>(
                 formControlName: 'room_id',
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: 'Assign Room', 
                   prefixIcon: const Icon(Icons.meeting_room_rounded),
                   hintText: _availableRooms.isEmpty ? 'No available rooms. Please add a room first.' : null,
                 ),
-                items: _availableRooms.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.roomNumber} - ${r.type.displayName} (₹${r.rate})'))).toList(),
+                items: _availableRooms.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.roomNumber} - ${r.type.displayName} (₹${r.rate})', overflow: TextOverflow.ellipsis))).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              ReactiveTextField<double>(
+                formControlName: 'room_rate',
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Room Rate (per night)', prefixIcon: Icon(Icons.price_change_rounded)),
               ),
               const SizedBox(height: 16),
 
@@ -443,6 +556,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                   Expanded(
                     child: ReactiveDropdownField<PaymentMode>(
                       formControlName: 'payment_mode',
+                      isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Payment Mode', prefixIcon: Icon(Icons.payment_rounded)),
                       items: PaymentMode.values.map((e) => DropdownMenuItem(value: e, child: Text(e.displayName))).toList(),
                     ),
@@ -454,7 +568,12 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               ReactiveTextField<double>(
                 formControlName: 'total_amount',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Total Amount (₹)', prefixIcon: Icon(Icons.currency_rupee_rounded)),
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Total Amount (₹)', 
+                  prefixIcon: Icon(Icons.currency_rupee_rounded),
+                  filled: true,
+                ),
               ),
 
               const SizedBox(height: 32),

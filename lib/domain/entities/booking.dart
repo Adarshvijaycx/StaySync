@@ -96,6 +96,25 @@ class Booking extends Equatable {
     };
   }
 
+  Map<String, dynamic> toAppwriteMap() {
+    return {
+      'id': id,
+      'hotel_id': hotelId,
+      'room_id': roomId,
+      'customer_id': customerId,
+      'booked_by_user_id': bookedByUserId,
+      'check_in': checkIn.toIso8601String(),
+      'check_out': checkOut.toIso8601String(),
+      // actual_check_out is not in the Appwrite schema
+      'guests_count': guestsCount,
+      'payment_mode': paymentMode.name,
+      'status': status.name,
+      'total_amount': totalAmount,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
   Booking copyWith({
     String? id,
     String? hotelId,

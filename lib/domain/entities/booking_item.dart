@@ -59,6 +59,7 @@ class BookingItem extends Equatable {
   /// Only includes fields that exist in the Appwrite collection schema.
   Map<String, dynamic> toAppwriteMap() {
     return {
+      'id': id,
       'booking_id': bookingId,
       'catalogue_item_id': itemId,
       'quantity': quantity,
