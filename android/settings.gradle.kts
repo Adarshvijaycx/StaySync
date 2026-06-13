@@ -24,3 +24,4 @@ plugins {
 }
 
 include(":app")
+rootProject.name = "nami_hotel"

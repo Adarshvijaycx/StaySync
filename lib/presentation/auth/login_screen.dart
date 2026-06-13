@@ -102,15 +102,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // --- Login Card ---
                   _buildLoginCard(theme, colorScheme, isLoading),
-                  const SizedBox(height: 24),
-
-                  // --- Footer ---
-                  Text(
-                    'Powered by Appwrite',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                    ),
-                  ),
                 ],
               ),
             ),

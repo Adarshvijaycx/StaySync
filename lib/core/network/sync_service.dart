@@ -73,7 +73,7 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
           );
         } else if (op.operationType == 'update') {
           if (docId == null) {
-            print('Skipping update op ${op.id}: missing document ID');
+            debugPrint('Skipping update op ${op.id}: missing document ID');
             await _syncQueue.removeOperation(op.id);
             continue;
           }
@@ -98,7 +98,7 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
           }
         } else if (op.operationType == 'delete') {
           if (docId == null) {
-            print('Skipping delete op ${op.id}: missing document ID');
+            debugPrint('Skipping delete op ${op.id}: missing document ID');
             await _syncQueue.removeOperation(op.id);
             continue;
           }
@@ -112,13 +112,13 @@ class SyncNotifier extends StateNotifier<SyncStatus> {
         await _syncQueue.removeOperation(op.id);
       } catch (e) {
         if (e is AppwriteException) {
-          print('Sync error on op ${op.id}: ${e.message} (Code: ${e.code}, Type: ${e.type})');
+          debugPrint('Sync error on op ${op.id}: ${e.message} (Code: ${e.code}, Type: ${e.type})');
         } else {
-          print('Sync error on op ${op.id}: $e');
+          debugPrint('Sync error on op ${op.id}: $e');
         }
         
         if (op.retryCount >= 3) {
-          print('Dropping operation ${op.id} after 3 failed retries to prevent queue blocking.');
+          debugPrint('Dropping operation ${op.id} after 3 failed retries to prevent queue blocking.');
           await _syncQueue.removeOperation(op.id);
         } else {
           await _syncQueue.incrementRetryCount(op.id);

@@ -77,7 +77,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: hotels.any((h) => h.id == activeHotelId) ? activeHotelId : hotels.first.id,
+                      initialValue: hotels.any((h) => h.id == activeHotelId) ? activeHotelId : hotels.first.id,
                       decoration: InputDecoration(
                         labelText: 'Managing Hotel',
                         prefixIcon: const Icon(Icons.business_rounded),
